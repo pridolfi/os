@@ -1,12 +1,16 @@
 /*==================[inclusions]=============================================*/
 
-#include "sched.h"
 #include "board.h"
+#include "os.h"
+
 #include <string.h>
 
 /*==================[macros and definitions]=================================*/
 
-typedef int32_t (*entry_point_t)(void *);
+/** valor de retorno de excepción a cargar en el LR */
+#define EXC_RETURN 0xFFFFFFF9
+
+#define INVALID_TASK ((uint32_t)-1)
 
 /*==================[internal data declaration]==============================*/
 
@@ -14,51 +18,21 @@ typedef int32_t (*entry_point_t)(void *);
 
 /*==================[internal data definition]===============================*/
 
+/** indice a la tarea actual */
+static uint32_t current_task = INVALID_TASK;
+
 /*==================[external data definition]===============================*/
-
-/* pilas de cada tarea */
-uint32_t stack1[128];
-uint32_t stack2[128];
-
-/* punteros de pila de cada tarea */
-uint32_t sp1;
-uint32_t sp2;
 
 /*==================[internal functions definition]==========================*/
 
-/*==================[external functions definition]==========================*/
-
-int32_t getNextContext(int32_t actualContext)
+/* si una tarea ejecuta return, vengo acá */
+static void return_hook(void * returnValue)
 {
-	static int actualTask;
-
-	if (actualTask == 0) {
-		actualTask = 1;
-		return sp1;
-	}
-	else if(actualTask == 1) {
-		actualTask = 2;
-		sp1 = actualContext;
-		return sp2;
-	}
-	else if (actualTask == 2) {
-		actualTask = 1;
-		sp2 = actualContext;
-		return sp1;
-	}
-
-	/* si llegamos a este punto, error en la política de scheduling!!! */
-	while(1);
-}
-
-void return_hook(void)
-{
-	/* por si una tarea ejecuta return, vengo acá */
 	while(1);
 }
 
 /* task_create sirve para crear un contexto inicial */
-void task_create(
+static void task_create(
 		uint32_t * stack_frame, /* vector de pila (frame) */
 		uint32_t stack_frame_size, /* el tamaño expresado en bytes */
 		uint32_t * stack_pointer, /* donde guardar el puntero de pila */
@@ -82,42 +56,78 @@ void task_create(
 	/* elemento -8: R0 (parámetro) */
 	stack_frame[stack_frame_size/4 - 8] = (uint32_t)parameter;
 
-	stack_frame[stack_frame_size/4 - 9] = 0xFFFFFFF9;
+	stack_frame[stack_frame_size/4 - 9] = EXC_RETURN;
 
 	/* inicializo stack pointer inicial */
 	*stack_pointer = (uint32_t)&(stack_frame[stack_frame_size/4 - 17]);
 }
 
-int32_t tarea1(void * param)
+/*==================[external functions definition]==========================*/
+
+/* rutina de selección de próximo contexto a ejecutarse
+ * acá definimos la política de scheduling de nuestro os
+ */
+int32_t getNextContext(int32_t current_context)
 {
-	int i;
-	while (1) {
-		Board_LED_Toggle(0);
-		for (i=0; i<0x3FFFFF; i++);
+	if (current_task == INVALID_TASK) {
+		current_task = 0;
 	}
-	return 0; /* a dónde va? */
+	else if(current_task == 0) {
+		task_list[current_task].sp = current_context;
+		current_task = 1;
+	}
+	else if (current_task == 1) {
+		task_list[current_task].sp = current_context;
+		current_task = 0;
+	}
+	else {
+		while(1); /* error!!! */
+	}
+	return task_list[current_task].sp;
 }
 
-int32_t tarea2(void * param)
+void schedule(void)
 {
-	int j;
-	while (1) {
-		Board_LED_Toggle(2);
-		for (j=0; j<0xFFFFF; j++);
-	}
-	return 1; /* a dónde va? */
+	/* activo PendSV para llevar a cabo el cambio de contexto */
+	SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+
+	/* Instruction Synchronization Barrier: aseguramos que se
+	 * ejecuten todas las instrucciones en  el pipeline
+	 */
+	__ISB();
+	/* Data Synchronization Barrier: aseguramos que se
+	 * completen todos los accesos a memoria
+	 */
+	__DSB();
 }
 
-int main(void)
+void SysTick_Handler(void)
 {
-	Board_Init();
+	schedule();
+}
+
+int start_os(void)
+{
+	uint32_t i;
+
+	/* actualizo SystemCoreClock (CMSIS) */
 	SystemCoreClockUpdate();
 
-	task_create(stack1, 128*4, &sp1, tarea1, (void *)0xAAAAAAAA);
-	task_create(stack2, 128*4, &sp2, tarea2, (void *)0xBBBBBBBB);
+	/* inicializo contextos iniciales de cada tarea */
+	for (i=0; i<TASK_COUNT; i++) {
+		task_create(task_list[i].stack, task_list[i].stack_size,
+				&(task_list[i].sp), task_list[i].entry_point,
+				task_list[i].parameter);
+	}
 
+	/* configuro PendSV con la prioridad más baja */
+	NVIC_SetPriority(PendSV_IRQn, 255);
 	SysTick_Config(SystemCoreClock / 1000);
-	while(1);
+
+	/* llamo al scheduler */
+	schedule();
+
+	return -1;
 }
 
 /*==================[end of file]============================================*/
