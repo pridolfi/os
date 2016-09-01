@@ -4,7 +4,6 @@
 /*==================[inclusions]=============================================*/
 
 #include "board.h"
-#include "os_config.h"
 
 /*==================[macros]=================================================*/
 
@@ -24,7 +23,8 @@ typedef struct taskControlBlock {
 
 /*==================[external data declaration]==============================*/
 
-extern taskControlBlock task_list[TASK_COUNT];
+extern taskControlBlock task_list[];
+extern const size_t task_count;
 
 /*==================[external functions declaration]=========================*/
 

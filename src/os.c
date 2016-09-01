@@ -114,7 +114,7 @@ int start_os(void)
 	SystemCoreClockUpdate();
 
 	/* inicializo contextos iniciales de cada tarea */
-	for (i=0; i<TASK_COUNT; i++) {
+	for (i=0; i<task_count; i++) {
 		task_create(task_list[i].stack, task_list[i].stack_size,
 				&(task_list[i].sp), task_list[i].entry_point,
 				task_list[i].parameter);

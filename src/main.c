@@ -28,6 +28,8 @@ taskControlBlock task_list[2] = {
 		{0, stack2, STACK_SIZE, tarea2, (void *)0xBBBBBBBB}
 };
 
+const size_t task_count = sizeof(task_list) / sizeof(taskControlBlock);
+
 /*==================[internal functions definition]==========================*/
 
 static void * tarea1(void * param)
