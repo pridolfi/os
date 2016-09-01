@@ -23,7 +23,7 @@ static void * tarea2(void * param);
 uint32_t stack1[STACK_SIZE/4];
 uint32_t stack2[STACK_SIZE/4];
 
-taskControlBlock task_list[2] = {
+taskControlBlock task_list[] = {
 		{0, stack1, STACK_SIZE, tarea1, (void *)0xAAAAAAAA},
 		{0, stack2, STACK_SIZE, tarea2, (void *)0xBBBBBBBB}
 };
