@@ -15,7 +15,7 @@ typedef void* (*entry_point_t)(void *);
 /** estructura de control y estado de tareas */
 typedef struct taskControlBlock {
 	uint32_t sp;
-	uint32_t * stack;
+	uint8_t * stack;
 	uint32_t stack_size;
 	entry_point_t entry_point;
 	void  * parameter;

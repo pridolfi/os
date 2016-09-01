@@ -33,33 +33,35 @@ static void return_hook(void * returnValue)
 
 /* task_create sirve para crear un contexto inicial */
 static void task_create(
-		uint32_t * stack_frame, /* vector de pila (frame) */
+		uint8_t * stack_frame, /* vector de pila (frame) */
 		uint32_t stack_frame_size, /* el tamaño expresado en bytes */
 		uint32_t * stack_pointer, /* donde guardar el puntero de pila */
 		entry_point_t entry_point, /* punto de entrada de la tarea */
 		void * parameter /* parametro de la tarea */)
 {
+	uint32_t * stack = (uint32_t *)stack_frame;
+
 	/* inicializo el frame en cero */
-	bzero(stack_frame, stack_frame_size);
+	bzero(stack, stack_frame_size);
 
 	/* último elemento del contexto inicial: xPSR
 	 * necesita el bit 24 (T, modo Thumb) en 1
 	 */
-	stack_frame[stack_frame_size/4 - 1] = 1<<24;
+	stack[stack_frame_size/4 - 1] = 1<<24;
 
 	/* anteúltimo elemento: PC (entry point) */
-	stack_frame[stack_frame_size/4 - 2] = (uint32_t)entry_point;
+	stack[stack_frame_size/4 - 2] = (uint32_t)entry_point;
 
 	/* penúltimo elemento: LR (return hook) */
-	stack_frame[stack_frame_size/4 - 3] = (uint32_t)return_hook;
+	stack[stack_frame_size/4 - 3] = (uint32_t)return_hook;
 
 	/* elemento -8: R0 (parámetro) */
-	stack_frame[stack_frame_size/4 - 8] = (uint32_t)parameter;
+	stack[stack_frame_size/4 - 8] = (uint32_t)parameter;
 
-	stack_frame[stack_frame_size/4 - 9] = EXC_RETURN;
+	stack[stack_frame_size/4 - 9] = EXC_RETURN;
 
 	/* inicializo stack pointer inicial */
-	*stack_pointer = (uint32_t)&(stack_frame[stack_frame_size/4 - 17]);
+	*stack_pointer = (uint32_t)&(stack[stack_frame_size/4 - 17]);
 }
 
 /*==================[external functions definition]==========================*/

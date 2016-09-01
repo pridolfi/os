@@ -20,8 +20,8 @@ static void * tarea2(void * param);
 /*==================[external data definition]===============================*/
 
 /* pilas de cada tarea */
-uint32_t stack1[STACK_SIZE/4];
-uint32_t stack2[STACK_SIZE/4];
+uint8_t stack1[STACK_SIZE];
+uint8_t stack2[STACK_SIZE];
 
 taskControlBlock task_list[] = {
 		{0, stack1, STACK_SIZE, tarea1, (void *)0xAAAAAAAA},
