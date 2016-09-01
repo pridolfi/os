@@ -37,7 +37,8 @@ static void task_create(
 		uint32_t stack_frame_size, /* el tamaño expresado en bytes */
 		uint32_t * stack_pointer, /* donde guardar el puntero de pila */
 		entry_point_t entry_point, /* punto de entrada de la tarea */
-		void * parameter /* parametro de la tarea */)
+		void * parameter, /* parametro de la tarea */
+		taskState * state)
 {
 	uint32_t * stack = (uint32_t *)stack_frame;
 
@@ -62,6 +63,9 @@ static void task_create(
 
 	/* inicializo stack pointer inicial */
 	*stack_pointer = (uint32_t)&(stack[stack_frame_size/4 - 17]);
+
+	/* seteo estado inicial READY */
+	*state = TASK_STATE_READY;
 }
 
 /*==================[external functions definition]==========================*/
@@ -119,7 +123,7 @@ int start_os(void)
 	for (i=0; i<task_count; i++) {
 		task_create(task_list[i].stack, task_list[i].stack_size,
 				&(task_list[i].sp), task_list[i].entry_point,
-				task_list[i].parameter);
+				task_list[i].parameter, &(task_list[i].state));
 	}
 
 	/* configuro PendSV con la prioridad más baja */
