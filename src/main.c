@@ -23,12 +23,10 @@ static void * tarea2(void * param);
 uint8_t stack1[STACK_SIZE];
 uint8_t stack2[STACK_SIZE];
 
-taskControlBlock task_list[] = {
-		{0, stack1, STACK_SIZE, tarea1, (void *)0xAAAAAAAA, 0},
-		{0, stack2, STACK_SIZE, tarea2, (void *)0xBBBBBBBB, 0}
+const taskDefinition task_list[TASK_COUNT] = {
+		{stack1, STACK_SIZE, tarea1, (void *)0xAAAAAAAA},
+		{stack2, STACK_SIZE, tarea2, (void *)0xBBBBBBBB}
 };
-
-const size_t task_count = sizeof(task_list) / sizeof(taskControlBlock);
 
 /*==================[internal functions definition]==========================*/
 

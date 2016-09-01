@@ -10,7 +10,15 @@
 /** valor de retorno de excepción a cargar en el LR */
 #define EXC_RETURN 0xFFFFFFF9
 
+/** id de tarea inválida */
 #define INVALID_TASK ((uint32_t)-1)
+
+/** estructura interna de control de tareas */
+typedef struct taskControlBlock {
+	uint32_t sp;
+	const taskDefinition * tdef;
+	taskState state;
+}taskControlBlock;
 
 /*==================[internal data declaration]==============================*/
 
@@ -20,6 +28,9 @@
 
 /** indice a la tarea actual */
 static uint32_t current_task = INVALID_TASK;
+
+/** estructura interna de control de tareas */
+static taskControlBlock task_control_list[TASK_COUNT];
 
 /*==================[external data definition]===============================*/
 
@@ -79,17 +90,17 @@ int32_t getNextContext(int32_t current_context)
 		current_task = 0;
 	}
 	else if(current_task == 0) {
-		task_list[current_task].sp = current_context;
+		task_control_list[current_task].sp = current_context;
 		current_task = 1;
 	}
 	else if (current_task == 1) {
-		task_list[current_task].sp = current_context;
+		task_control_list[current_task].sp = current_context;
 		current_task = 0;
 	}
 	else {
 		while(1); /* error!!! */
 	}
-	return task_list[current_task].sp;
+	return task_control_list[current_task].sp;
 }
 
 void schedule(void)
@@ -120,10 +131,15 @@ int start_os(void)
 	SystemCoreClockUpdate();
 
 	/* inicializo contextos iniciales de cada tarea */
-	for (i=0; i<task_count; i++) {
-		task_create(task_list[i].stack, task_list[i].stack_size,
-				&(task_list[i].sp), task_list[i].entry_point,
-				task_list[i].parameter, &(task_list[i].state));
+	for (i=0; i<TASK_COUNT; i++) {
+		task_control_list[i].tdef = task_list+i;
+
+		task_create(task_control_list[i].tdef->stack,
+				task_control_list[i].tdef->stack_size,
+				&(task_control_list[i].sp),
+				task_control_list[i].tdef->entry_point,
+				task_control_list[i].tdef->parameter,
+				&(task_control_list[i].state));
 	}
 
 	/* configuro PendSV con la prioridad más baja */

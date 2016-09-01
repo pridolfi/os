@@ -4,6 +4,7 @@
 /*==================[inclusions]=============================================*/
 
 #include "board.h"
+#include "os_config.h"
 
 /*==================[macros]=================================================*/
 
@@ -22,20 +23,17 @@ typedef enum taskState {
 	TASK_STATE_TERMINATED
 }taskState;
 
-/** estructura de control y estado de tareas */
-typedef struct taskControlBlock {
-	uint32_t sp;
+/** estructura de definicón de tareas */
+typedef struct taskDefinition {
 	uint8_t * stack;
 	uint32_t stack_size;
 	entry_point_t entry_point;
 	void  * parameter;
-	taskState state;
-}taskControlBlock;
+}taskDefinition;
 
 /*==================[external data declaration]==============================*/
 
-extern taskControlBlock task_list[];
-extern const size_t task_count;
+extern const taskDefinition task_list[TASK_COUNT];
 
 /*==================[external functions declaration]=========================*/
 
