@@ -13,6 +13,10 @@
 /** id de tarea inválida */
 #define INVALID_TASK ((uint32_t)-1)
 
+/** id de tarea idle */
+#define IDLE_TASK (TASK_COUNT)
+
+/** tamaño de stack de tarea idle */
 #define STACK_IDLE_SIZE 256
 
 /** estructura interna de control de tareas */
@@ -122,52 +126,52 @@ void delay(uint32_t milliseconds)
 int32_t getNextContext(int32_t current_context)
 {
 	uint32_t previous_task = current_task;
+	uint32_t returned_stack;
+	taskState state;
 
-	if (current_task == INVALID_TASK) {
+	/* guardo contexto actual si es necesario */
+	if (current_task == IDLE_TASK) {
 		idle_task_control.sp = current_context;
-		current_task = 0;
 	}
-	else {
-		current_task++;
-		if (current_task == TASK_COUNT) {
-			current_task = 0;
-		}
-	}
-
-	while((task_control_list[current_task].state != TASK_STATE_READY) &&
-			(previous_task != current_task)) {
-
-		current_task++;
-		if (current_task == TASK_COUNT) {
-			current_task = 0;
-		}
-
-	}
-
-	if (task_control_list[current_task].state != TASK_STATE_RUNNING) {
-		if (current_task == previous_task) {
-			current_task = INVALID_TASK;
-			return idle_task_control.sp;
-		}
-
-		if (current_task != previous_task) {
-			if (previous_task == INVALID_TASK) {
-				idle_task_control.state = TASK_STATE_READY;
-			}
-			else  {
-				task_control_list[previous_task].sp = current_context;
-
-				if (task_control_list[previous_task].state == TASK_STATE_RUNNING) {
-					task_control_list[previous_task].state = TASK_STATE_READY;
-				}
-			}
-			task_control_list[current_task].state = TASK_STATE_RUNNING;
-		}
-	}
-	else {
+	else if (current_task < TASK_COUNT) {
 		task_control_list[current_task].sp = current_context;
 	}
-	return task_control_list[current_task].sp;
+
+	/* decido cuál va a ser el contexto siguiente a ejecutar */
+	do {
+		current_task++;
+		if (current_task > IDLE_TASK) {
+			current_task = 0;
+		}
+		if (current_task == IDLE_TASK) {
+			state = idle_task_control.state;
+		}
+		else {
+			state = task_control_list[current_task].state;
+		}
+	} while ((state != TASK_STATE_READY)
+			&& (previous_task != current_task)
+			&& (previous_task != INVALID_TASK));
+
+	/* si salí del while encontrando una tarea en estado READY... */
+	if (task_control_list[current_task].state == TASK_STATE_READY) {
+		task_control_list[current_task].state = TASK_STATE_RUNNING;
+		returned_stack = task_control_list[current_task].sp;
+
+		if (previous_task == IDLE_TASK) {
+			idle_task_control.state = TASK_STATE_READY;
+		}
+		else if ((previous_task < TASK_COUNT)
+				&& (task_control_list[previous_task].state == TASK_STATE_RUNNING)) {
+			task_control_list[previous_task].state = TASK_STATE_READY;
+		}
+	}
+	else { /* si no hay tareas READY, ejecuto tarea idle */
+		current_task = IDLE_TASK;
+		idle_task_control.state = TASK_STATE_RUNNING;
+		returned_stack = idle_task_control.sp;
+	}
+	return returned_stack;
 }
 
 void schedule(void)
@@ -225,8 +229,6 @@ int start_os(void)
 
 	/* llamo al scheduler */
 	schedule();
-
-	idle_hook(NULL);
 
 	return -1;
 }

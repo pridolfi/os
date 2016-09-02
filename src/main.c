@@ -44,7 +44,7 @@ static void * tarea2(void * param)
 	int j=4;
 	while (j) {
 		Board_LED_Toggle(3);
-		delay(1000);
+		for(j=0; j<0xFFFFF; j++);
 	}
 	return (void *)4; /* a dónde va? */
 }
