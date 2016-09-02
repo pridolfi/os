@@ -39,6 +39,7 @@ extern const taskDefinition task_list[TASK_COUNT];
 
 int start_os(void);
 void schedule(void);
+void delay(uint32_t milliseconds);
 
 /*==================[end of file]============================================*/
 #endif /* #ifndef _OS_H_ */

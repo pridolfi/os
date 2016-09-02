@@ -32,20 +32,19 @@ const taskDefinition task_list[TASK_COUNT] = {
 
 static void * tarea1(void * param)
 {
-	int i;
 	while (1) {
 		Board_LED_Toggle(0);
-		for (i=0; i<0x3FFFFF; i++);
+		delay(500);
 	}
 	return (void *)0; /* a dónde va? */
 }
 
 static void * tarea2(void * param)
 {
-	int j;
+	int j=4;
 	while (j) {
-		Board_LED_Toggle(2);
-		for (j=0; j<0xFFFFF; j++);
+		Board_LED_Toggle(3);
+		delay(1000);
 	}
 	return (void *)4; /* a dónde va? */
 }
