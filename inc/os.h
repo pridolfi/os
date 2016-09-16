@@ -10,6 +10,14 @@
 
 /*==================[typedef]================================================*/
 
+/** prioridades */
+typedef enum taskPriority {
+	TASK_PRIORITY_IDLE,
+	TASK_PRIORITY_LOW,
+	TASK_PRIORITY_MEDIUM,
+	TASK_PRIORITY_HIGH,
+}taskPriority;
+
 /** prototipo de las tareas o hilos de ejecucion o threads */
 typedef void* (*entry_point_t)(void *);
 
@@ -29,6 +37,7 @@ typedef struct taskDefinition {
 	uint32_t stack_size;
 	entry_point_t entry_point;
 	void  * parameter;
+	taskPriority prio;
 }taskDefinition;
 
 /*==================[external data declaration]==============================*/

@@ -48,9 +48,36 @@ static taskDefinition idle_tdef = {
 };
 static taskControlBlock idle_task_control;
 
+/** lista de tareas READY por prioridad, TASK_COUNT tareas por cada nivel */
+static uint32_t ready_list[TASK_PRIORITY_HIGH][TASK_COUNT];
+static uint32_t ready_count[TASK_PRIORITY_HIGH];
+
 /*==================[external data definition]===============================*/
 
 /*==================[internal functions definition]==========================*/
+
+static void add_ready(taskPriority prio, uint32_t id)
+{
+	ready_list[prio-1][ready_count[prio-1]] = id;
+	ready_count[prio-1]++;
+}
+
+static void remove_ready(taskPriority prio, uint32_t id)
+{
+	uint32_t i;
+	for (i=0; i<ready_count[prio-1]; i++) {
+		if (ready_list[prio-1][i] == id) {
+			break;
+		}
+	}
+	if (i < ready_count[prio-1]) {
+		uint32_t j;
+		for (j=i; j<(ready_count[prio-1]-1); j++) {
+			ready_list[prio-1][j] = ready_list[prio-1][j+1];
+		}
+		ready_count[prio-1]--;
+	}
+}
 
 /* si una tarea ejecuta return, vengo acá */
 static void return_hook(void * returnValue)
@@ -104,6 +131,7 @@ void task_delay_update(void)
 			task_control_list[i].waiting_time--;
 			if (task_control_list[i].waiting_time == 0) {
 				task_control_list[i].state = TASK_STATE_READY;
+				add_ready(task_control_list[i].tdef->prio, i);
 			}
 		}
 	}
@@ -125,48 +153,32 @@ void delay(uint32_t milliseconds)
  */
 int32_t getNextContext(int32_t current_context)
 {
-	uint32_t previous_task = current_task;
 	uint32_t returned_stack;
-	taskState state;
 
 	/* guardo contexto actual si es necesario */
 	if (current_task == IDLE_TASK) {
 		idle_task_control.sp = current_context;
+		idle_task_control.state = TASK_STATE_READY;
 	}
 	else if (current_task < TASK_COUNT) {
 		task_control_list[current_task].sp = current_context;
+		if (task_control_list[current_task].state == TASK_STATE_RUNNING) {
+			task_control_list[current_task].state = TASK_STATE_READY;
+			add_ready(task_list[current_task].prio, current_task);
+		}
 	}
-
 	/* decido cuál va a ser el contexto siguiente a ejecutar */
-	do {
-		current_task++;
-		if (current_task > IDLE_TASK) {
-			current_task = 0;
-		}
-		if (current_task == IDLE_TASK) {
-			state = idle_task_control.state;
-		}
-		else {
-			state = task_control_list[current_task].state;
-		}
-	} while ((state != TASK_STATE_READY)
-			&& (previous_task != current_task)
-			&& (previous_task != INVALID_TASK));
-
-	/* si salí del while encontrando una tarea en estado READY... */
-	if (task_control_list[current_task].state == TASK_STATE_READY) {
-		task_control_list[current_task].state = TASK_STATE_RUNNING;
-		returned_stack = task_control_list[current_task].sp;
-
-		if (previous_task == IDLE_TASK) {
-			idle_task_control.state = TASK_STATE_READY;
-		}
-		else if ((previous_task < TASK_COUNT)
-				&& (task_control_list[previous_task].state == TASK_STATE_RUNNING)) {
-			task_control_list[previous_task].state = TASK_STATE_READY;
+	taskPriority p;
+	for (p = TASK_PRIORITY_HIGH; p > TASK_PRIORITY_IDLE; p--) {
+		if (ready_count[p-1] > 0) {
+			current_task = ready_list[p-1][0];
+			remove_ready(p, current_task);
+			task_control_list[current_task].state = TASK_STATE_RUNNING;
+			returned_stack = task_control_list[current_task].sp;
+			break;
 		}
 	}
-	else { /* si no hay tareas READY, ejecuto tarea idle */
+	if (p == TASK_PRIORITY_IDLE) {
 		current_task = IDLE_TASK;
 		idle_task_control.state = TASK_STATE_RUNNING;
 		returned_stack = idle_task_control.sp;
@@ -178,6 +190,7 @@ void schedule(void)
 {
 	/* activo PendSV para llevar a cabo el cambio de contexto */
 	SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+
 
 	/* Instruction Synchronization Barrier: aseguramos que se
 	 * ejecuten todas las instrucciones en  el pipeline
@@ -221,6 +234,8 @@ int start_os(void)
 				task_control_list[i].tdef->entry_point,
 				task_control_list[i].tdef->parameter,
 				&(task_control_list[i].state));
+
+		add_ready(task_list[i].prio, i);
 	}
 
 	/* configuro PendSV con la prioridad más baja */
