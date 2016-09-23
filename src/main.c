@@ -3,6 +3,8 @@
 #include "os.h"
 #include "board.h"
 
+#include <stdlib.h>
+
 /*==================[macros and definitions]=================================*/
 
 /** tamaño de pila para los threads */
@@ -38,10 +40,11 @@ const taskDefinition task_list[TASK_COUNT] = {
 
 static void * tarea1(void * param)
 {
-	int j=4;
+	float j=4;
 	while (j) {
+		j *= 1.1;
 		Board_LED_Toggle(0);
-		delay(60);
+		delay(rand() & 0xFF);
 	}
 	return (void *)0; /* a dónde va? */
 }
@@ -51,18 +54,18 @@ static void * tarea2(void * param)
 	int j=4;
 	while (j) {
 		Board_LED_Toggle(3);
-		delay(520);
-
+		delay(rand() & 0x1FF);
 	}
 	return (void *)4; /* a dónde va? */
 }
 
 static void * tarea3(void * param)
 {
-	int j=4;
-	while (j) {
+	float j=4;
+	while (j+1) {
+		j = 1 + 100 * rand();
 		Board_LED_Toggle(4);
-		delay(620);
+		delay((int)j & 0x7FF);
 	}
 	return (void *)0; /* a dónde va? */
 }
@@ -72,7 +75,7 @@ static void * tarea4(void * param)
 	int j=4;
 	while (j) {
 		Board_LED_Toggle(5);
-		delay(500);
+		delay(rand() & 0x3FF);
 	}
 	return (void *)4; /* a dónde va? */
 }

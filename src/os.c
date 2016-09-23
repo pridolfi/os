@@ -141,7 +141,7 @@ void task_delay_update(void)
 
 void delay(uint32_t milliseconds)
 {
-	if (current_task != INVALID_TASK) {
+	if ((milliseconds != 0) && (current_task != INVALID_TASK)) {
 		task_control_list[current_task].state = TASK_STATE_WAITING;
 		task_control_list[current_task].waiting_time = milliseconds;
 		schedule();
