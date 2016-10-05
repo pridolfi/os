@@ -10,9 +10,6 @@
 /** valor de retorno de excepción a cargar en el LR */
 #define EXC_RETURN 0xFFFFFFF9
 
-/** id de tarea inválida */
-#define INVALID_TASK ((uint32_t)-1)
-
 /** id de tarea idle */
 #define IDLE_TASK (TASK_COUNT)
 
@@ -138,6 +135,11 @@ void task_delay_update(void)
 }
 
 /*==================[external functions definition]==========================*/
+
+uint32_t os_get_running_task(void)
+{
+	return current_task;
+}
 
 void delay(uint32_t milliseconds)
 {

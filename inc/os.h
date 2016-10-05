@@ -5,8 +5,13 @@
 
 #include "board.h"
 #include "os_config.h"
+#include "vector.h"
+#include "event.h"
 
 /*==================[macros]=================================================*/
+
+/** id de tarea inválida */
+#define INVALID_TASK ((uint32_t)-1)
 
 /*==================[typedef]================================================*/
 
@@ -49,6 +54,7 @@ extern const taskDefinition task_list[TASK_COUNT];
 int start_os(void);
 void schedule(void);
 void delay(uint32_t milliseconds);
+uint32_t os_get_running_task(void);
 
 /*==================[end of file]============================================*/
 #endif /* #ifndef _OS_H_ */
