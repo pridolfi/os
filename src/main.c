@@ -12,7 +12,7 @@
 /*==================[macros and definitions]=================================*/
 
 /** tamaño de pila para los threads */
-#define STACK_SIZE 1024
+#define STACK_SIZE 2048
 
 /*==================[internal data declaration]==============================*/
 
@@ -23,9 +23,10 @@ static void * tarea2(void * param);
 
 /*==================[internal data definition]===============================*/
 
-static queue_t q;
-
 /*==================[external data definition]===============================*/
+
+/* cola para el ejercicio */
+queue_t q;
 
 /* pilas de cada tarea */
 uint8_t stack1[STACK_SIZE];
@@ -41,11 +42,18 @@ const taskDefinition task_list[TASK_COUNT] = {
 static void * tarea1(void * param)
 {
 	queueItem_t item;
-	char str[50];
+	char str[100];
+
+	strcpy(str, "[t1] esperando datos...\r\n");
+	uartSend(str, strlen(str));
 
 	while (1) {
 		item = queueGet(&q);
-		sprintf(str, "recibido: %f\r\n", item);
+		/* la siguiente es una forma alternativa al %f para formatear un float
+		 * si uso directamente %f se me va a hard fault :(
+		 * si alguno lo soluciona y usa %f, lo tendré en cuenta ;)
+		 */
+		sprintf(str, "[t1] recibido: %d.%d\r\n", (int)item,(int)(item*10000)-((int)item)*10000);
 		uartSend(str, strlen(str));
 	}
 	return NULL;
@@ -53,8 +61,15 @@ static void * tarea1(void * param)
 
 static void * tarea2(void * param)
 {
+	char str[50];
+
+	strcpy(str, "[t2] enviando pi cada 5 segundos...\r\n");
+	uartSend(str, strlen(str));
+
 	while (1) {
 		delay(5000);
+		strcpy(str, "[t2] enviando datos...\r\n");
+		uartSend(str, strlen(str));
 		queuePut(&q, 3.1416);
 	}
 	return NULL;

@@ -73,7 +73,7 @@ void queuePut(queue_t * q, queueItem_t d)
 	{
 		if(q->task != INVALID_TASK)
 		{
-			/* error! esta soporta una tarea esperando a la vez */
+			/* error! esta queue soporta una tarea esperando a la vez */
 			while(1) {};
 		}
 		q->task = os_get_running_task();
@@ -97,7 +97,7 @@ queueItem_t queueGet(queue_t * q)
 	{
 		if(q->task != INVALID_TASK)
 		{
-			/* error! esta soporta una tarea esperando a la vez */
+			/* error! esta queue soporta una tarea esperando a la vez */
 			while (1);
 		}
 		q->task = os_get_running_task();

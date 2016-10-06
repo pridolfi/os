@@ -33,28 +33,35 @@
 
 #include "ciaaIO.h"
 #include "os.h"
+#include "queue.h"
+
+extern queue_t q;
 
 static ciaaPin_t inputs[4] = { {0,4},{0,8},{0,9},{1,9} };
 static ciaaPin_t outputs[6] = { {5,0},{5,1},{5,2},{0,14},{1,11},{1,12} };
 
 void irq_tec1(void)
 {
-
+	queuePut(&q, 1.1);
+	Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH0);
 }
 
 void irq_tec2(void)
 {
-
+	queuePut(&q, 2.2);
+	Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH1);
 }
 
 void irq_tec3(void)
 {
-
+	queuePut(&q, 3.3);
+	Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH2);
 }
 
 void irq_tec4(void)
 {
-
+	queuePut(&q, 4.4);
+	Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH3);
 }
 
 void ioInit(void)

@@ -32,10 +32,6 @@
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
 
-/** \brief Queue implementation for OSEK-OS applications.
- **
- **/
-
 /*==================[inclusions]=============================================*/
 
 #include "os.h"
@@ -66,7 +62,7 @@ typedef struct
 
 /** initialize queue
  * @param q queue to be initialized
- * @param e osek event defined for this queue
+ * @return 0 on successful creation, -1 on error
  */
 int32_t queueInit(queue_t * q);
 
