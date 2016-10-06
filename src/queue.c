@@ -74,10 +74,13 @@ void queuePut(queue_t * q, queueItem_t d)
 		if(q->task != INVALID_TASK)
 		{
 			/* error! esta queue soporta una tarea esperando a la vez */
-			while(1) {};
+			while (1) { }
 		}
 		q->task = os_get_running_task();
-		os_event_wait(q->ev);
+		if (os_event_wait(q->ev) != 0) {
+			/* error al esperar evento */
+			while (1) { }
+		}
 		q->task = INVALID_TASK;
 	}
 
@@ -87,7 +90,10 @@ void queuePut(queue_t * q, queueItem_t d)
 
 	if(q->task != INVALID_TASK)
 	{
-		os_event_set(q->ev);
+		if (os_event_set(q->ev) != 0) {
+			/* error al setear evento */
+			while (1) { }
+		}
 	}
 }
 
@@ -101,14 +107,20 @@ queueItem_t queueGet(queue_t * q)
 			while (1);
 		}
 		q->task = os_get_running_task();
-		os_event_wait(q->ev);
+		if (os_event_wait(q->ev) != 0) {
+			/* error al esperar evento */
+			while (1) { }
+		}
 		q->task = INVALID_TASK;
 	}
 	queueItem_t d = q->data[q->tail];
 	q->tail = (q->tail+1)%QUEUE_LEN;
 	if(q->task != INVALID_TASK)
 	{
-		os_event_set(q->ev);
+		if (os_event_set(q->ev) != 0) {
+			/* error al setear evento */
+			while (1) { }
+		}
 	}
 	return d;
 }

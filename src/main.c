@@ -86,7 +86,10 @@ int main(void)
 
 	ioInit();
 
-	queueInit(&q);
+	if (queueInit(&q) != 0) {
+		/* error al crear cola */
+		while (1) { }
+	}
 
 	/* Inicio OS */
 	start_os();

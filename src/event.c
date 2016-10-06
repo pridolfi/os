@@ -20,21 +20,21 @@
 os_event_t os_event_init(void)
 {
 	os_event_t ev = INVALID_EVENT;
-	/* TODO: implemente esta función */
+	/* TODO: implemente esta función y devuelva el ID del evento creado */
 	return ev;
 }
 
 int32_t os_event_wait(os_event_t ev)
 {
 	int32_t rv = -1;
-	/* TODO: implemente esta función */
+	/* TODO: implemente esta función y devuelva 0 (OK) */
 	return -1;
 }
 
 int32_t os_event_set(os_event_t ev)
 {
 	int32_t rv = -1;
-	/* TODO: implemente esta función */
+	/* TODO: implemente esta función y devuelva 0 (OK) */
 	return -1;
 }
 
